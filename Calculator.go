@@ -13,17 +13,10 @@ func main() {
 
 	fmt.Println("Введите выражение:")
 	seq, _ := reader.ReadString('\n') // ВХОДЯЩИЕ ДАННЫЕ
+	seq = strings.TrimSpace(seq)
 	var mass []string                 // МАССИВ ДАННЫХ
 	mass = strings.Split(seq, " ")
 	a, _ := strconv.Atoi(mass[0])
-	b := uint(mass[1])
-	fmt.Println(mass, a, b)
-	operation(a, b)
-}
-
-func operation(X, Y int) int {
-	var c int
-	c = X + Y
-	fmt.Println(X + Y)
-	return c
+	b, _ := strconv.Atoi(mass[2])
+	fmt.Println(a + b)
 }
