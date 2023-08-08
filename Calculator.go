@@ -57,23 +57,25 @@ func rim_arab(x, y string) (A, B int) {
 }
 
 func main() {
-	a, b, c, T, err := input_and_check()
-	if err == nil {
-		I := operation(a, b, c)
-		if T == "Arab" {
-			fmt.Println(I)
-		} else {
-			if I <= 0 {
-				err = fmt.Errorf("ошибка: итог вычислений между римскими числами не может быть меньше или равен нулю")
-				fmt.Println(err)
+	fmt.Println("Калькулятор запущен! Автор: Кизнер Даниил Александрович.\nОзнакомьтесь с правилами использования:\n\n1) Калькулятор поддерживает римские и арабские цифры\n2)Вводимые цифры должны принадлежать промежутку от 1 до 10 включительно\n3) Вводимые данные должны быть представлены в формате: (операнд)(пробел)(оператор)(пробел)(операнд)\n4) Калькулятор поддерживает только сл. операции: (+), (-), (*), (/)\n5) Результатом вычисления, где операнды - это римские цифры, не может быть ноль или отрицательное число\n6) Калькулятор НЕ поддерживает операнды, записанные в разных системах исчисления\n\nДля завершения работы калькулятора введите '0'\nПри не соблюдении одного из правил инструкции - программа выдаст ошибку.\nДля завершения работы введите '0'.\n")
+	for a, b, c, T, err := input_and_check(); a != 0 && T != "STOP"; a, b, c, T, err = input_and_check() {
+		if err == nil {
+			I := operation(a, b, c)
+			if T == "Arab" {
+				fmt.Println(I)
 			} else {
-				fmt.Println(arab_rim(I))
+				if I <= 0 {
+					err = fmt.Errorf("ошибка: итог вычислений между римскими числами не может быть меньше или равен нулю")
+					fmt.Println(err, "\n")
+				} else {
+					fmt.Println(arab_rim(I))
+				}
 			}
+		} else {
+			fmt.Println(err, "\n")
 		}
-	} else {
-		fmt.Println(err)
 	}
-
+	fmt.Println("Спасибо, за использование данного калькулятора, программа завершена.\n Для финансовой поддержки разработчика:\n\n Тинькофф - 89002929461\n Сбербанк - 89149549306\n")
 }
 
 func operation(x, y int, z string) (itog int) {
@@ -106,7 +108,12 @@ func input_and_check() (A, B int, C, T string, err error) {
 	seq = strings.TrimSpace(seq)
 	var mass []string // МАССИВ ДАННЫХ
 	mass = strings.Split(seq, " ")
+	A, err1 := strconv.Atoi(mass[0])
+	T = ""
 	switch {
+	case (err1 == nil) && (A == 0) && (len(mass)) == 1:
+		T = "STOP"
+		return
 	case len(mass) > 3:
 		err = fmt.Errorf("ошибка: формат математической операции не удовлетворяет заданию — два операнда и один оператор (+, -, /, *)")
 		return
@@ -114,7 +121,6 @@ func input_and_check() (A, B int, C, T string, err error) {
 		err = fmt.Errorf("ошибка: введённая строка не является математической операцией")
 		return
 	}
-	A, err1 := strconv.Atoi(mass[0])
 	B, err2 := strconv.Atoi(mass[2])
 	C = mass[1]
 	if err1 == nil && err2 == nil {
