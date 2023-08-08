@@ -33,7 +33,12 @@ var RimNum map[string]int = map[string]int{
 func arab_rim(x int) (A string) {
 	var h int = x / 100 // СОТНИ
 	var t int = x / 10  // ДЕСЯТКИ
-	var ch int = x % t  // ЕДИНИЦЫ
+	var ch int          // ЕДИНИЦЫ
+	if t == 0 {
+		ch = x
+	} else {
+		ch = x % (t * 10)
+	}
 	if h == 1 {
 		A = "C"
 		return A
@@ -46,32 +51,46 @@ func arab_rim(x int) (A string) {
 }
 
 func rim_arab(x, y string) (A, B int) {
-	RimNum = make(map[string]int)
 	A = RimNum[x]
 	B = RimNum[y]
 	return A, B
 }
 
 func main() {
-	fmt.Println(operation(input_and_check()))
+	a, b, c, T, err := input_and_check()
+	if err == nil {
+		I := operation(a, b, c)
+		if T == "Arab" {
+			fmt.Println(I)
+		} else {
+			if I <= 0 {
+				err = fmt.Errorf("ошибка: итог вычислений между римскими числами не может быть меньше или равен нулю")
+				fmt.Println(err)
+			} else {
+				fmt.Println(arab_rim(I))
+			}
+		}
+	} else {
+		fmt.Println(err)
+	}
+
 }
 
 func operation(x, y int, z string) (itog int) {
 	switch z {
 	case "+":
-		return x + y
+		itog = x + y
 	case "-":
-		return x - y
+		itog = x - y
 	case "*":
-		return x * y
+		itog = x * y
 	case "/":
-		return x / y
+		itog = x / y
 	}
 	return
 }
 
 func loop(x int) (y string) {
-	RimNum = make(map[string]int)
 	for k, v := range RimNum {
 		if v == x {
 			y = k
@@ -80,43 +99,44 @@ func loop(x int) (y string) {
 	return
 }
 
-func input_and_check() (A, B int, C string) {
+func input_and_check() (A, B int, C, T string, err error) {
 	reader := bufio.NewReader(os.Stdin)
 	fmt.Println("Введите выражение:")
-	for seq, _ := reader.ReadString('\n'); seq != "0"; seq, _ = reader.ReadString('\n') {
-		seq = strings.TrimSpace(seq)
-		var mass []string // МАССИВ ДАННЫХ
-		mass = strings.Split(seq, " ")
-		A, err1 := strconv.Atoi(mass[0])
-		B, err2 := strconv.Atoi(mass[2])
-		C = mass[1]
-		if err1 == nil && err2 == nil {
-			if A > 10 || B > 10 || A <= 0 || B <= 0 {
-				err := fmt.Errorf("введённые числа не принадлежать промежутку [1; 10]")
-				fmt.Println(err)
-			} else {
-				return A, B, C
-			}
+	seq, _ := reader.ReadString('\n')
+	seq = strings.TrimSpace(seq)
+	var mass []string // МАССИВ ДАННЫХ
+	mass = strings.Split(seq, " ")
+	switch {
+	case len(mass) > 3:
+		err = fmt.Errorf("ошибка: формат математической операции не удовлетворяет заданию — два операнда и один оператор (+, -, /, *)")
+		return
+	case len(mass) < 3:
+		err = fmt.Errorf("ошибка: введённая строка не является математической операцией")
+		return
+	}
+	A, err1 := strconv.Atoi(mass[0])
+	B, err2 := strconv.Atoi(mass[2])
+	C = mass[1]
+	if err1 == nil && err2 == nil {
+		T = "Arab"
+		if A > 10 || B > 10 || A <= 0 || B <= 0 {
+			err = fmt.Errorf("ошибка: введённые числа не принадлежат промежутку [1; 10]")
 		} else {
-			if check_rim(err1, err2) == nil {
-				if v := check_rim_count(mass[0], mass[2]); v == nil {
-					A, B = rim_arab(mass[0], mass[2])
-					switch {
-					case A > 10 || B > 10 || A <= 0 || B <= 0:
-						err := fmt.Errorf("введённые числа не принадлежать промежутку [1; 10]")
-						fmt.Println(err)
-					case A-B <= 0:
-						err := fmt.Errorf("итог вычислений в арабской системе исчисления не может быть меньше или равен нулю")
-						fmt.Println(err)
-					default:
-						return A, B, C
-					}
+			return A, B, C, T, err
+		}
+	} else {
+		if err = check_rim(err1, err2); err == nil {
+			T = "Rim"
+			if err, A, B := check_rim_count(mass[0], mass[2]); err == nil {
+				if A > 10 || B > 10 || A <= 0 || B <= 0 {
+					err = fmt.Errorf("ошибка: введённые числа не принадлежать промежутку [1; 10]")
 				} else {
-					fmt.Print(v)
+					return A, B, C, T, err
 				}
+			} else {
+				return A, B, C, T, err
 			}
 		}
-		fmt.Println("Введите выражение:")
 	}
 	return
 }
@@ -126,21 +146,28 @@ func check_rim(err1, err2 error) (err error) {
 	case err1 != nil && err2 != nil:
 		err = nil
 		return err
-	case err1 != nil || err2 != nil:
+	case (err1 == nil && err2 != nil) || (err1 != nil && err2 == nil):
 		err = fmt.Errorf("ошибка: используются разные системы исчисления")
+		break
+		return err
+	default:
+		err = fmt.Errorf("ошибка: введены неизвестные значения, не являющиеся числами")
 		return err
 	}
 	return
 }
 
-func check_rim_count(x, y string) (err error) {
-	RimNum = make(map[string]int)
-	_, err1 := RimNum[x]
-	_, err2 := RimNum[y]
-	if err1 && err2 {
+func check_rim_count(x, y string) (err error, num1, num2 int) {
+	num1, err1 := RimNum[x]
+	num2, err2 := RimNum[y]
+	switch {
+	case num1 > 10 || num2 > 10:
+		err = fmt.Errorf("ошибка: для ввода доступны только цифры из арабской и римской системы исчисления в промежутке [1; 10]")
+		return
+	case err1 && err2:
 		err = nil
-		return err
-	} else {
+		return
+	default:
 		err = fmt.Errorf("ошибка: для ввода доступны только цифры из арабской и римской системы исчисления в промежутке [1; 10]")
 		return
 	}
